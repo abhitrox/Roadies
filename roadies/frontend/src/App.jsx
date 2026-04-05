@@ -1,42 +1,57 @@
 import React, { useState, useEffect } from 'react';
-import { AppProvider } from './context/AppContext';
-import LoginPage from './pages/LoginPage';
-import DashboardPage from './pages/DashboardPage';
+import { AppContextProvider } from './context/AppContext';
+import Dashboard from './components/Dashboard';
+import Login from './components/LoginForm';
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Check if user is already logged in (from localStorage)
   useEffect(() => {
     const savedUser = localStorage.getItem('roadies_user');
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
-      setIsLoggedIn(true);
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
+        localStorage.removeItem('roadies_user');
+      }
     }
+    setLoading(false);
   }, []);
 
   const handleLogin = (userData) => {
     setUser(userData);
-    setIsLoggedIn(true);
     localStorage.setItem('roadies_user', JSON.stringify(userData));
-    localStorage.setItem('roadies_token', userData.token);
   };
 
   const handleLogout = () => {
     setUser(null);
-    setIsLoggedIn(false);
     localStorage.removeItem('roadies_user');
-    localStorage.removeItem('roadies_token');
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-600 to-blue-700">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mx-auto mb-4"></div>
+          <p className="text-white font-bold text-lg">Loading Roadies...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <AppProvider>
-      {isLoggedIn ? (
-        <DashboardPage user={user} onLogout={handleLogout} />
-      ) : (
-        <LoginPage onLogin={handleLogin} />
-      )}
-    </AppProvider>
+    <AppContextProvider>
+      <div className="h-screen w-screen overflow-hidden bg-white">
+        {user ? (
+          <Dashboard user={user} onLogout={handleLogout} />
+        ) : (
+          <Login onLogin={handleLogin} />
+        )}
+      </div>
+    </AppContextProvider>
   );
 }
 

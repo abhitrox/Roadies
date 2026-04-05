@@ -29,3 +29,49 @@ body {
 .animate-upulse {
   animation: upulse 2s infinite;
 }
+
+
+/* Leaflet Styles */
+.leaflet-control-container {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.leaflet-popup {
+  margin-bottom: 0;
+}
+
+.leaflet-popup-tip {
+  background-color: white;
+}
+
+.leaflet-container {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: #e5e3df;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  background: #fff;
+  color: #0c0c10;
+  overflow: hidden;
+  height: 100vh;
+}
+
+@keyframes upulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+.animate-upulse {
+  animation: upulse 2s infinite;
+}
