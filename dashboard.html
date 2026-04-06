@@ -128,7 +128,7 @@
                 <div class="flex justify-between items-start mb-6 relative z-10">
                     <div>
                         <h3 class="text-sm font-bold uppercase tracking-widest text-black">Roadies Demand Forecast</h3>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase">Model: Graph-Neural Network v4.2</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Model: Graph-Neural Network </p>
                     </div>
                     <span class="text-[10px] font-black bg-blue-600 text-white px-3 py-1.5 uppercase tracking-tighter italic shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">Live Analysis</span>
                 </div>
@@ -184,30 +184,60 @@
         const runBtn = document.getElementById('run-prediction');
         let myChart = null;
         let currentChartType = 'line';
-        let currentData = [15, 12, 8, 5, 10, 25, 65, 110, 145, 120, 95, 85, 90, 105, 130, 155, 140, 110, 85, 65, 50, 40, 30, 20];
-        let currentLabels = Array.from({length: 24}, (_, i) => `${i}:00`);
+let currentData = [15, 12, 8, 5, 10, 25, 65, 110, 145, 120, 95, 85, 90, 105, 130, 155, 140, 110, 85, 65, 50, 40, 30, 20]; // fallback mock
+let currentLabels = Array.from({length: 24}, (_, i) => `${i}:00`);
+let currentPrev24h = []; // from uploaded file
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files[0]) {
-                document.getElementById('file-info').innerText = `DATA READY: ${e.target.files[0].name.toUpperCase()}`;
-                document.getElementById('file-info').classList.remove('hidden');
-                runBtn.classList.remove('hidden');
-            }
-        });
+fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        document.getElementById('file-info').innerText = `DATA READY: ${file.name.toUpperCase()}`;
+        document.getElementById('file-info').classList.remove('hidden');
+        runBtn.classList.remove('hidden');
+        
+        // Parse CSV to extract last 24 ride_count
+        const text = await file.text();
+        const rows = text.split('\n').slice(1); // skip header
+        const rideCounts = rows.map(row => {
+            const cols = row.split(',');
+            return parseFloat(cols[cols.length - 1]); // ride_count last col
+        }).filter(n => !isNaN(n));
+        currentPrev24h = rideCounts.slice(-24);
+        console.log('Parsed prev24h:', currentPrev24h);
+    }
+});
 
-        runBtn.addEventListener('click', () => {
-            runBtn.innerText = "SYNCHRONIZING NEURAL MAP...";
-            setTimeout(() => {
-                document.getElementById('results-placeholder').classList.add('hidden');
-                document.getElementById('results-display').classList.remove('hidden');
-                document.getElementById('metrics-footer').classList.remove('hidden');
-                runBtn.innerText = "FORECAST SYNCHRONIZED";
-                runBtn.className = "w-full mt-6 bg-emerald-600 text-white font-black py-4 transition uppercase text-sm tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
-                
-                renderChart();
-                updateMetrics();
-            }, 1800);
+runBtn.addEventListener('click', async () => {
+    runBtn.innerText = "SYNCHRONIZING NEURAL MAP...";
+    runBtn.disabled = true;
+    
+    try {
+        const response = await fetch('http://localhost:8000/predict', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({prev_24h: currentPrev24h.length === 24 ? currentPrev24h : Array(24).fill(30)})
         });
+        const data = await response.json();
+        if (data.error) throw new Error(data.error);
+        
+        currentData = data.predictions;
+        document.getElementById('peak-val').innerText = data.peak;
+        document.getElementById('avg-val').innerText = data.avg;
+        console.log('ML Predictions:', data);
+    } catch (error) {
+        console.error('API error, fallback mock:', error);
+        alert('API unavailable, using mock data');
+    }
+    
+    document.getElementById('results-placeholder').classList.add('hidden');
+    document.getElementById('results-display').classList.remove('hidden');
+    document.getElementById('metrics-footer').classList.remove('hidden');
+    runBtn.innerText = "FORECAST SYNCHRONIZED";
+    runBtn.className = "w-full mt-6 bg-emerald-600 text-white font-black py-4 transition uppercase text-sm tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
+    runBtn.disabled = false;
+    
+    renderChart();
+});
 
         function changeChartType(type) {
             currentChartType = type;
