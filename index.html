@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobility AI | Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .text-accent-blue { color: #3b82f6; }
+        .bg-accent-blue { background-color: #3b82f6; }
+        .border-accent-blue { border-color: #3b82f6; }
+    </style>
+</head>
+<body class="bg-[#0f172a] font-sans antialiased">
+
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white p-10 rounded-none shadow-2xl w-full max-w-md border-t-4 border-accent-blue">
+            
+            <div class="mb-8">
+                <h2 id="auth-title" class="text-3xl font-black text-black uppercase tracking-tighter">Business <span class="text-accent-blue">Login</span></h2>
+                <p class="text-slate-500 mt-2 font-medium">Urban Mobility AI Forecasting</p>
+            </div>
+
+            <form id="auth-form" class="space-y-6">
+                <div id="biz-name-group" class="hidden">
+                    <label class="block text-xs font-bold uppercase tracking-widest text-black mb-1">Business Name</label>
+                    <input type="text" id="biz-name" class="block w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-black outline-none transition" placeholder="Enter Company Name">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-black mb-1">Business Email</label>
+                    <input type="email" id="biz-email" required class="block w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-black outline-none transition" placeholder="corp@domain.com">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-widest text-black mb-1">Password</label>
+                    <input type="password" id="password" required class="block w-full px-4 py-3 bg-slate-50 border-2 border-slate-200 focus:border-black outline-none transition" placeholder="••••••••">
+                </div>
+
+                <button type="submit" id="submit-btn" class="w-full bg-black text-white font-bold py-4 hover:bg-accent-blue transition-all duration-300">
+                    SIGN IN
+                </button>
+            </form>
+
+            <div class="mt-8 text-center text-sm">
+                <span id="toggle-text" class="text-slate-500">Need a corporate account?</span>
+                <button onclick="toggleAuthMode()" id="toggle-link" class="ml-1 font-bold text-black border-b-2 border-accent-blue hover:text-accent-blue transition">Register</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let isLoginMode = true;
+        const businessAccounts = [{ bizName: 'Global Mobility Inc', bizEmail: 'admin@global.com', password: 'password123' }];
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            document.getElementById('auth-form').reset();
+            
+            const title = document.getElementById('auth-title');
+            const btn = document.getElementById('submit-btn');
+            const toggleText = document.getElementById('toggle-text');
+            const toggleLink = document.getElementById('toggle-link');
+            const bizGroup = document.getElementById('biz-name-group');
+
+            if (isLoginMode) {
+                title.innerHTML = 'Business <span class="text-accent-blue">Login</span>';
+                btn.innerText = "SIGN IN";
+                toggleText.innerText = "Need a corporate account?";
+                toggleLink.innerText = "Register";
+                bizGroup.classList.add('hidden');
+            } else {
+                title.innerHTML = 'New <span class="text-accent-blue">Account</span>';
+                btn.innerText = "CREATE ACCOUNT";
+                toggleText.innerText = "Already registered?";
+                toggleLink.innerText = "Sign In";
+                bizGroup.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('biz-email').value;
+            const password = document.getElementById('password').value;
+
+            if (isLoginMode) {
+                const account = businessAccounts.find(acc => acc.bizEmail === email && acc.password === password);
+                if (account) {
+                    // In a real app, you'd use localStorage or a session cookie
+                    window.location.href = 'dashboard.html';
+                } else {
+                    alert("ACCESS DENIED: Invalid Credentials.");
+                }
+            } else {
+                const name = document.getElementById('biz-name').value;
+                businessAccounts.push({ bizName: name, bizEmail: email, password: password });
+                alert("SUCCESS: Business Registered. Please Sign In.");
+                toggleAuthMode();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roadies | Executive Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .text-accent-blue { color: #3b82f6; }
+        .bg-accent-blue { background-color: #3b82f6; }
+        .border-accent-blue { border-color: #3b82f6; }
+        /* Custom pulsing effect for live indicator */
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+        .live-dot { animation: pulse-green 2s infinite; }
+    </style>
+</head>
+<body class="bg-slate-50 antialiased text-slate-900 flex flex-col min-h-screen">
+
+    <nav class="bg-black text-white px-8 py-4 flex justify-between items-center border-b-4 border-accent-blue shadow-lg">
+        <div class="flex items-center space-x-3">
+            <h1 class="text-2xl font-extrabold tracking-tighter uppercase italic">Roadies</h1>
+        </div>
+        
+        <div class="hidden md:flex flex-col items-center">
+            <div id="live-date" class="text-[10px] uppercase font-bold text-slate-400 tracking-widest leading-none mb-1">--</div>
+            <div id="live-clock" class="text-lg font-black font-mono text-accent-blue">00:00:00</div>
+        </div>
+
+        <div class="flex items-center space-x-6">
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-slate-400 uppercase leading-none mb-1">Executive Partner</p>
+                <p id="owner-name" class="text-sm font-black uppercase">Alex Sterling</p>
+            </div>
+            <button onclick="window.location.href='index.html'" class="border-2 border-white px-4 py-2 text-xs font-bold hover:bg-white hover:text-black transition uppercase tracking-wider flex items-center space-x-2">
+                <span>Logout</span>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+            </button>
+        </div>
+    </nav>
+
+    <main class="p-8 max-w-7xl mx-auto w-full flex-grow">
+        <div class="mb-12 border-l-8 border-accent-blue pl-6 flex justify-between items-end">
+            <div>
+                <h2 class="text-4xl font-black text-black uppercase tracking-tight">Executive Dashboard</h2>
+                <p class="text-slate-500 font-medium flex items-center">
+                    Welcome back, <span class="text-black ml-1 font-bold">Alex</span>. System Status: 
+                    <span class="flex items-center ml-2 text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full text-xs border border-emerald-200">
+                        <span class="w-2 h-2 bg-emerald-500 rounded-full mr-1.5 live-dot"></span>Operational
+                    </span>
+                </p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-2 border-black mb-12 shadow-[10px_10px_0px_0px_rgba(0,0,0,1)] bg-white">
+            <div class="p-10 border-b-2 md:border-b-0 md:border-r-2 border-black hover:bg-blue-50 transition group flex items-start justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-black uppercase tracking-widest mb-4">Projected Demand</div>
+                    <div class="text-5xl font-black text-black group-hover:text-accent-blue transition">88<span class="text-accent-blue">%</span></div>
+                </div>
+                <div class="w-12 h-12 text-slate-200 group-hover:text-blue-200 transition">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+            </div>
+            <div class="p-10 border-b-2 md:border-b-0 md:border-r-2 border-black hover:bg-slate-50 transition group flex items-start justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-black uppercase tracking-widest mb-4">AI Confidence</div>
+                    <div class="text-5xl font-black text-black group-hover:text-emerald-600 transition">0.94</div>
+                </div>
+                <div class="w-12 h-12 text-slate-200 group-hover:text-slate-300 transition">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.989-2.386l-.548-.547z"></path></svg>
+                </div>
+            </div>
+            <div class="p-10 hover:bg-amber-50 transition group flex items-start justify-between">
+                <div>
+                    <div class="text-slate-400 text-xs font-black uppercase tracking-widest mb-4">Fleet Load</div>
+                    <div class="text-5xl font-black text-accent-blue uppercase italic group-hover:text-amber-600 transition">Optimal</div>
+                </div>
+                <div class="w-12 h-12 text-blue-100 group-hover:text-amber-200 transition">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"></path></svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-1 space-y-6">
+                <div class="bg-black p-8 text-white h-fit shadow-[8px_8px_0px_0px_rgba(59,130,246,1)]">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-blue-400">Roadies Data Input</h3>
+                        <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-700 p-8 text-center hover:border-accent-blue transition cursor-pointer bg-slate-900 rounded-lg group">
+                        <div class="mx-auto w-12 h-12 text-slate-600 group-hover:text-accent-blue transition mb-4">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4 uppercase font-bold tracking-wider">Drag & Drop System logs</p>
+                        <p class="text-[10px] text-slate-600 mb-4">(Excel, CSV, or JSON)</p>
+                        <input type="file" id="file-input" class="hidden" accept=".json,.csv">
+                        <button onclick="document.getElementById('file-input').click()" class="bg-accent-blue text-white text-[10px] font-black py-2.5 px-6 hover:bg-blue-600 transition uppercase tracking-widest rounded">SELECT FILE</button>
+                    </div>
+                    <div id="file-info" class="mt-4 text-[10px] text-accent-blue hidden font-mono bg-slate-900 p-3 rounded border border-slate-800"></div>
+                    <button id="run-prediction" class="w-full mt-6 bg-white text-black font-black py-4 hover:bg-accent-blue hover:text-white transition hidden uppercase text-sm tracking-tighter">Initialize Neural Forecast</button>
+                </div>
+
+                <div class="border-2 border-black p-6 bg-slate-50 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)]">
+                    <h3 class="text-xs font-black uppercase tracking-widest mb-4 text-slate-500">Rendering Engine</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-2">
+                        <button onclick="changeChartType('line')" class="chart-type-btn bg-black text-white text-[10px] font-black py-3 px-4 text-left border-2 border-black active-type transition hover:scale-[1.02] transform">LINE GRAPH</button>
+                        <button onclick="changeChartType('bar')" class="chart-type-btn bg-white text-black text-[10px] font-black py-3 px-4 text-left border-2 border-black hover:bg-black hover:text-white transition hover:scale-[1.02] transform">BAR CHART</button>
+                        <button onclick="changeChartType('pie')" class="chart-type-btn bg-white text-black text-[10px] font-black py-3 px-4 text-left border-2 border-black hover:bg-black hover:text-white transition hover:scale-[1.02] transform">PIE DISTRIBUTION</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 border-2 border-black p-8 bg-white shadow-[12px_12px_0px_0px_rgba(59,130,246,1)] relative overflow-hidden">
+                <div class="absolute -bottom-10 -right-10 w-64 h-64 text-slate-50 opacity-10 transform -rotate-12 pointer-events-none">
+                    <svg fill="currentColor" viewBox="0 0 24 24"><path d="M13.5 2c-5.246 0-9.5 4.254-9.5 9.5s4.254 9.5 9.5 9.5 9.5-4.254 9.5-9.5-4.254-9.5-9.5-9.5zm.332 15.688c-.375.011-.7.218-.868.528-.314.577-.992.813-1.577.5-1.074-.576-1.594-1.841-1.222-2.986.096-.296.06-.616-.104-.889-.481-.806-.445-1.839.104-2.607a1.135 1.135 0 00.222-1.066c-.353-1.09.2-2.27 1.289-2.738.546-.233.791-.849.567-1.402-.2-.497-.03-.896.331-1.09.336-.18.736-.15 1.071.076.313.212.729.177.994-.094.407-.417 1.05-.41 1.458.016.275.289.697.354 1.028.158 1.13-.67 1.57 2.158.825 2.768-.188.154-.117.391.134.469.721.225 1.15.932 1.025 1.684-.042.253.072.508.278.672.639.512.753 1.417.29 2.115-.175.263-.178.601-.014.87.51.838.4 1.916-.29 2.656-.226.241-.302.585-.187.893.411 1.098-.106 2.308-1.189 2.809-.54.25-.769.877-.513 1.416.216.455.083.864-.265 1.085z"></path></svg>
+                </div>
+
+                <div class="flex justify-between items-start mb-6 relative z-10">
+                    <div>
+                        <h3 class="text-sm font-bold uppercase tracking-widest text-black">Roadies Demand Forecast</h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase">Model: Graph-Neural Network v4.2</p>
+                    </div>
+                    <span class="text-[10px] font-black bg-blue-600 text-white px-3 py-1.5 uppercase tracking-tighter italic shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">Live Analysis</span>
+                </div>
+                
+                <div id="results-placeholder" class="flex flex-col items-center justify-center h-80 border-2 border-dashed border-slate-200 rounded-xl bg-slate-50">
+                    <svg class="w-16 h-16 text-slate-200 mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    <p class="font-bold text-xs text-slate-300 uppercase tracking-widest text-center px-12">Awaiting Roadies Data Ingestion...<br><span class="font-normal lowercase">Upload system logs to generate neural mapping.</span></p>
+                </div>
+
+                <div id="results-display" class="hidden h-80 relative z-10">
+                    <canvas id="demandChart"></canvas>
+                </div>
+
+                <div id="metrics-footer" class="hidden mt-8 grid grid-cols-2 md:grid-cols-4 gap-4 border-t-2 border-black pt-6 relative z-10">
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Peak Frequency</p>
+                        <p id="peak-val" class="text-2xl font-black text-black">--</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Avg. Demand</p>
+                        <p id="avg-val" class="text-2xl font-black text-black">--</p>
+                    </div>
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-tight">AI Confidence</p>
+                        <p class="text-2xl font-black text-blue-600 tracking-tight">94.2%</p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-100">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Volatility</p>
+                        <p class="text-2xl font-black text-emerald-600 italic">Low</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-black py-8 text-center mt-12 border-t-4 border-accent-blue">
+        <p class="text-slate-600 text-xs font-bold uppercase tracking-[0.3em] font-jakarta">© 2026 Roadies Urban Systems</p>
+        <p class="text-slate-800 text-[9px] uppercase mt-2">Neural Engine v4.2 | Telemetry Synced</p>
+    </footer>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            const dateString = now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+            document.getElementById('live-clock').textContent = timeString;
+            document.getElementById('live-date').textContent = dateString;
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        const fileInput = document.getElementById('file-input');
+        const runBtn = document.getElementById('run-prediction');
+        let myChart = null;
+        let currentChartType = 'line';
+        let currentData = [15, 12, 8, 5, 10, 25, 65, 110, 145, 120, 95, 85, 90, 105, 130, 155, 140, 110, 85, 65, 50, 40, 30, 20];
+        let currentLabels = Array.from({length: 24}, (_, i) => `${i}:00`);
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                document.getElementById('file-info').innerText = `DATA READY: ${e.target.files[0].name.toUpperCase()}`;
+                document.getElementById('file-info').classList.remove('hidden');
+                runBtn.classList.remove('hidden');
+            }
+        });
+
+        runBtn.addEventListener('click', () => {
+            runBtn.innerText = "SYNCHRONIZING NEURAL MAP...";
+            setTimeout(() => {
+                document.getElementById('results-placeholder').classList.add('hidden');
+                document.getElementById('results-display').classList.remove('hidden');
+                document.getElementById('metrics-footer').classList.remove('hidden');
+                runBtn.innerText = "FORECAST SYNCHRONIZED";
+                runBtn.className = "w-full mt-6 bg-emerald-600 text-white font-black py-4 transition uppercase text-sm tracking-widest shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]";
+                
+                renderChart();
+                updateMetrics();
+            }, 1800);
+        });
+
+        function changeChartType(type) {
+            currentChartType = type;
+            document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                btn.className = "chart-type-btn bg-white text-black text-[10px] font-black py-3 px-4 text-left border-2 border-black hover:bg-black hover:text-white transition hover:scale-[1.02] transform";
+            });
+            event.currentTarget.className = "chart-type-btn bg-black text-white text-[10px] font-black py-3 px-4 text-left border-2 border-black shadow-[4px_4px_0px_0px_rgba(59,130,246,1)]";
+            if(myChart) renderChart();
+        }
+
+        function updateMetrics() {
+            document.getElementById('peak-val').innerText = Math.max(...currentData);
+            document.getElementById('avg-val').innerText = Math.round(currentData.reduce((a,b) => a+b)/24);
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            if (myChart) myChart.destroy();
+
+            // Setup gradient fill for line chart
+            let fillGradient = null;
+            if (currentChartType === 'line') {
+                fillGradient = ctx.createLinearGradient(0, 0, 0, 300);
+                fillGradient.addColorStop(0, 'rgba(59, 130, 246, 0.2)');
+                fillGradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+            }
+
+            const chartConfig = {
+                type: currentChartType,
+                data: {
+                    labels: currentLabels,
+                    datasets: [{
+                        label: 'Predicted Ride Frequency',
+                        data: currentData,
+                        borderColor: '#2563eb',
+                        backgroundColor: currentChartType === 'pie' 
+                            ? currentData.map((_, i) => `hsl(${210 + (i * 2)}, 70%, ${50 + (i % 2 * 10)}%)`) 
+                            : (currentChartType === 'line' ? fillGradient : 'rgba(37, 99, 235, 0.8)'),
+                        borderWidth: currentChartType === 'line' ? 4 : 1,
+                        fill: currentChartType === 'line',
+                        tension: 0.4, // Smooth lines
+                        pointRadius: currentChartType === 'line' ? 0 : 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: '#2563eb',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        legend: { display: currentChartType === 'pie' },
+                        tooltip: {
+                            backgroundColor: '#000',
+                            titleFont: { size: 12, weight: 'bold', family: 'Plus Jakarta Sans' },
+                            bodyFont: { size: 12, family: 'Plus Jakarta Sans' },
+                            padding: 10,
+                            cornerRadius: 4,
+                            displayColors: currentChartType !== 'pie'
+                        }
+                    },
+                    scales: currentChartType === 'pie' ? {} : {
+                        y: { 
+                            beginAtZero: true, 
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }
+                        },
+                        x: { 
+                            grid: { display: false },
+                            ticks: { font: { family: 'Plus Jakarta Sans', size: 10 } }
+                        }
+                    }
+                }
+            };
+            myChart = new Chart(ctx, chartConfig);
+        }
+    </script>
+</body>
+</html>
