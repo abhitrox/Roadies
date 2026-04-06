@@ -37,25 +37,25 @@ function LoginForm({ onLogin }) {
   };
 
   return (
-    <div className="w-full md:w-96 flex items-center justify-center p-8 bg-white">
-      <div className="w-full">
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-10">
-          <div className="w-8 h-8 bg-ink rounded flex items-center justify-center text-white font-bold text-lg">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
             →
           </div>
-          <span className="text-xl font-black text-ink">Roadies</span>
+          <span className="text-2xl font-bold text-gray-900">Roadies</span>
         </div>
 
-        <h2 className="text-2xl font-black text-ink mb-2">Sign in</h2>
-        <p className="text-sm text-muted mb-8 leading-relaxed">
+        <h2 className="text-3xl font-bold text-gray-900 mb-2">Sign in</h2>
+        <p className="text-sm text-gray-600 mb-8 leading-relaxed">
           Compare predicted fares near you in seconds.
         </p>
 
         {/* Google Button */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full bg-white border-2 border-border rounded-lg px-5 py-3 font-semibold text-ink flex items-center justify-center gap-3 hover:border-gray-400 hover:bg-pill transition-all mb-4"
+          className="w-full bg-white border-2 border-gray-300 rounded-lg px-5 py-3 font-semibold text-gray-900 flex items-center justify-center gap-3 hover:bg-gray-50 hover:border-gray-400 transition-all mb-4"
         >
           <svg viewBox="0 0 20 20" className="w-5 h-5">
             <path fill="#4285F4" d="M19.6 10.23c0-.68-.06-1.34-.17-1.97H10v3.73h5.41a4.62 4.62 0 0 1-2 3.03v2.52h3.24C18.34 15.9 19.6 13.26 19.6 10.23z"/>
@@ -67,10 +67,10 @@ function LoginForm({ onLogin }) {
         </button>
 
         {/* Divider */}
-        <div className="flex items-center gap-3 my-6 text-sm text-muted">
-          <div className="flex-1 h-px bg-border"></div>
+        <div className="flex items-center gap-3 my-6 text-sm text-gray-500">
+          <div className="flex-1 h-px bg-gray-300"></div>
           <span>or sign in with email</span>
-          <div className="flex-1 h-px bg-border"></div>
+          <div className="flex-1 h-px bg-gray-300"></div>
         </div>
 
         {/* Error Message */}
@@ -83,7 +83,7 @@ function LoginForm({ onLogin }) {
         {/* Form */}
         <form onSubmit={handleEmailLogin} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
               Email
             </label>
             <input
@@ -92,12 +92,12 @@ function LoginForm({ onLogin }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@email.com"
               required
-              className="w-full border-2 border-border rounded-lg px-4 py-3 text-sm font-medium text-ink placeholder-gray-400 focus:outline-none focus:border-ink transition-colors"
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-muted uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">
               Password
             </label>
             <input
@@ -106,21 +106,21 @@ function LoginForm({ onLogin }) {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
               required
-              className="w-full border-2 border-border rounded-lg px-4 py-3 text-sm font-medium text-ink placeholder-gray-400 focus:outline-none focus:border-ink transition-colors"
+              className="w-full border-2 border-gray-300 rounded-lg px-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-200 transition-colors"
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-ink text-white rounded-lg px-5 py-3 font-bold text-sm hover:bg-gray-900 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-2"
+            className="w-full bg-blue-600 text-white rounded-lg px-5 py-3 font-bold text-sm hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-all mt-2"
           >
             {isLoading ? 'Signing in...' : 'Sign in →'}
           </button>
         </form>
 
-        <p className="text-xs text-muted text-center mt-6 leading-relaxed">
-          By continuing you agree to our <a href="#" className="text-ink font-bold hover:underline">Terms</a> and <a href="#" className="text-ink font-bold hover:underline">Privacy Policy</a>.
+        <p className="text-xs text-gray-600 text-center mt-6 leading-relaxed">
+          By continuing you agree to our <a href="#" className="text-gray-900 font-bold hover:underline">Terms</a> and <a href="#" className="text-gray-900 font-bold hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </div>

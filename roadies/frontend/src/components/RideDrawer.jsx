@@ -27,67 +27,40 @@ function RideDrawer() {
   };
 
   const [activeTab, setActiveTab] = useState('all');
-  const [isExpanded, setIsExpanded] = useState(false);
   const [bookingInProgress, setBookingInProgress] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
   const [sourceName, setSourceName] = useState('Getting location...');
-  const [sourceCity, setSourceCity] = useState('');
-  const [destCity, setDestCity] = useState('');
   const [predictedRides, setPredictedRides] = useState([]);
   const [distanceInfo, setDistanceInfo] = useState(null);
   const [editingDestination, setEditingDestination] = useState(false);
   const [destinationInput, setDestinationInput] = useState('');
   const [demandLevel, setDemandLevel] = useState('normal');
-  const [sameCity, setSameCity] = useState(false);
-  const drawerRef = useRef(null);
+  const [isWithinRange, setIsWithinRange] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const scrollContainerRef = useRef(null);
-  const startYRef = useRef(0);
-  const startHeightRef = useRef(0);
-  const isDraggingRef = useRef(false);
 
   const ridesToDisplay = predictedRides.length > 0 ? predictedRides : rides;
-
-  // Get city name from coordinates
-  const getCityFromCoordinates = async (lat, lng) => {
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
-      );
-      const data = await response.json();
-      
-      if (data && data.address) {
-        const city = data.address.city || 
-                    data.address.town || 
-                    data.address.village || 
-                    data.address.county || 
-                    'Unknown';
-        const state = data.address.state || '';
-        return { city, state, fullAddress: data.display_name };
-      }
-      return { city: 'Unknown', state: '', fullAddress: '' };
-    } catch (error) {
-      console.error('Error getting city:', error);
-      return { city: 'Unknown', state: '', fullAddress: '' };
-    }
-  };
 
   // Get source location name from live coordinates
   useEffect(() => {
     const fetchSourceName = async () => {
       try {
-        const { city, state, fullAddress } = await getCityFromCoordinates(
-          userLocation[0],
-          userLocation[1]
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${userLocation[0]}&lon=${userLocation[1]}`
         );
-        
-        setSourceCity(city);
-        setSourceName(`${city}${state ? ', ' + state : ''}`);
-        console.log('📍 Source City:', city);
+        const data = await response.json();
+
+        if (data.address) {
+          const city = data.address.city || data.address.town || data.address.village || 'Your Location';
+          const state = data.address.state || '';
+          setSourceName(`${city}${state ? ', ' + state : ''}`);
+        } else {
+          setSourceName('Your Location');
+        }
       } catch (error) {
         console.log('Using default source');
         setSourceName('Your Location');
-        setSourceCity('Unknown');
       }
     };
 
@@ -96,7 +69,7 @@ function RideDrawer() {
 
   // Calculate distance between two coordinates (Haversine formula)
   const calculateDistance = (lat1, lng1, lat2, lng2) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371;
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLng = ((lng2 - lng1) * Math.PI) / 180;
     const a =
@@ -159,7 +132,7 @@ function RideDrawer() {
         const lng = parseFloat(firstResult.lon);
         const name = firstResult.display_name.split(',')[0];
 
-        console.log(`📍 Location found: ${name} (${lat.toFixed(4)}, ${lng.toFixed(4)})`);
+        console.log(`Location found: ${name}`);
 
         setDestination([lat, lng]);
         setDestinationName(name);
@@ -176,39 +149,12 @@ function RideDrawer() {
     if (!destination) {
       setPredictedRides([]);
       setDistanceInfo(null);
-      setDestCity('');
-      setSameCity(false);
+      setIsWithinRange(false);
       return;
     }
 
     const predictPrices = async () => {
       try {
-        console.log('🤖 ML predicting prices from source to destination...');
-        console.log('Source (From):', userLocation);
-        console.log('Destination (To):', destination);
-
-        // Get destination city
-        const { city: destCityName } = await getCityFromCoordinates(
-          destination[0],
-          destination[1]
-        );
-        
-        setDestCity(destCityName);
-        console.log('🏙️ Source City:', sourceCity);
-        console.log('🏙️ Destination City:', destCityName);
-
-        // Check if same city
-        const isSameCity = sourceCity.toLowerCase() === destCityName.toLowerCase();
-        setSameCity(isSameCity);
-
-        if (!isSameCity) {
-          console.log('⚠️ Different cities - Not showing rides');
-          setPredictedRides([]);
-          setDistanceInfo(null);
-          return;
-        }
-
-        // Calculate distance between source and destination
         const distance = calculateDistance(
           userLocation[0],
           userLocation[1],
@@ -222,38 +168,27 @@ function RideDrawer() {
           to: destination,
         });
 
-        console.log(`📏 Distance calculated: ${distance.toFixed(2)}km`);
+        const withinRange = distance <= 10;
+        setIsWithinRange(withinRange);
 
-        // Only proceed if same city AND distance is reasonable (max 50km for rides)
-        if (distance > 50) {
-          console.log('⚠️ Distance too far - Not showing rides');
+        if (!withinRange) {
           setPredictedRides([]);
           return;
         }
 
-        // Call ML backend for price prediction
         const mlUrl = `http://localhost:5000/api/rides/predict-price?` +
           `fromLat=${userLocation[0]}&fromLng=${userLocation[1]}&` +
           `toLat=${destination[0]}&toLng=${destination[1]}&` +
           `distance=${distance.toFixed(2)}`;
 
-        console.log('🔗 ML API URL:', mlUrl);
-
         const response = await fetch(mlUrl);
         const data = await response.json();
-        
-        console.log('💰 ML Response:', data);
 
-        // Update rides with ML predicted prices
         if (data.predictions && Array.isArray(data.predictions)) {
-          console.log('✅ Using ML predictions from backend');
-          
           const updatedRides = rides.map((ride) => {
             const prediction = data.predictions.find((p) => p.type === ride.type);
             const basePrice = prediction ? prediction.price : ride.price;
             const priceRange = calculatePriceRange(basePrice, distance);
-            
-            console.log(`Ride: ${ride.name} (${ride.type}) - Price Range: ₹${priceRange.min} - ₹${priceRange.max}`);
             
             return {
               ...ride,
@@ -266,9 +201,6 @@ function RideDrawer() {
 
           setPredictedRides(updatedRides);
         } else {
-          // Fallback: Simple ML calculation (distance-based)
-          console.log('⚠️ Backend response missing predictions, using fallback calculation');
-          
           const basePrices = {
             bike: 20,
             auto: 50,
@@ -280,8 +212,6 @@ function RideDrawer() {
               (basePrices[ride.type] || 100) * (1 + distance * 0.5)
             );
             const priceRange = calculatePriceRange(basePrice, distance);
-            
-            console.log(`Ride: ${ride.name} (${ride.type}) - Fallback Price Range: ₹${priceRange.min} - ₹${priceRange.max}`);
             
             return {
               ...ride,
@@ -295,19 +225,13 @@ function RideDrawer() {
           setPredictedRides(updatedRides);
         }
       } catch (error) {
-        console.error('❌ ML Prediction error:', error);
-        
-        const updatedRides = rides.map((ride) => ({
-          ...ride,
-          mlPredicted: false,
-        }));
-        
-        setPredictedRides(updatedRides);
+        console.error('ML Prediction error:', error);
+        setPredictedRides([]);
       }
     };
 
     predictPrices();
-  }, [destination, userLocation, rides, sourceCity]);
+  }, [destination, userLocation, rides]);
 
   const filterRides = (type) => {
     if (type === 'all') return ridesToDisplay;
@@ -319,107 +243,13 @@ function RideDrawer() {
   const handleBookRide = async (ride) => {
     setBookingInProgress(true);
     try {
-      console.log('📱 Booking', ride.app, 'ride:', ride.name);
-      console.log('Route: From', sourceName, 'To', destinationName);
-      console.log('Distance:', distanceInfo?.distance.toFixed(2), 'km');
-      console.log('Price Range: ₹', ride.priceRange?.min, '-', ride.priceRange?.max);
-      console.log('Current Price: ₹', ride.price);
-      
+      console.log('Booking', ride.app, 'ride:', ride.name);
       realRideService.openRideApp(ride);
     } catch (error) {
       console.error('Error booking ride:', error);
       alert('Failed to book ride');
     } finally {
       setBookingInProgress(false);
-    }
-  };
-
-  const handleMouseDown = (e) => {
-    isDraggingRef.current = true;
-    startYRef.current = e.clientY;
-    startHeightRef.current = isExpanded ? window.innerHeight : 288;
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  const handleTouchStart = (e) => {
-    isDraggingRef.current = true;
-    startYRef.current = e.touches[0].clientY;
-    startHeightRef.current = isExpanded ? window.innerHeight : 288;
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleTouchEnd);
-  };
-
-  const handleMouseMove = (e) => {
-    if (!isDraggingRef.current) return;
-
-    const diff = startYRef.current - e.clientY;
-    const newHeight = startHeightRef.current + diff;
-    const maxHeight = window.innerHeight - 100;
-    const minHeight = 200;
-
-    if (drawerRef.current) {
-      const clampedHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
-      drawerRef.current.style.maxHeight = clampedHeight + 'px';
-    }
-  };
-
-  const handleTouchMove = (e) => {
-    if (!isDraggingRef.current) return;
-
-    const diff = startYRef.current - e.touches[0].clientY;
-    const newHeight = startHeightRef.current + diff;
-    const maxHeight = window.innerHeight - 100;
-    const minHeight = 200;
-
-    if (drawerRef.current) {
-      const clampedHeight = Math.max(minHeight, Math.min(newHeight, maxHeight));
-      drawerRef.current.style.maxHeight = clampedHeight + 'px';
-    }
-  };
-
-  const handleMouseUp = () => {
-    isDraggingRef.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    snapToPosition();
-  };
-
-  const handleTouchEnd = () => {
-    isDraggingRef.current = false;
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleTouchEnd);
-    snapToPosition();
-  };
-
-  const snapToPosition = () => {
-    if (drawerRef.current) {
-      const currentHeight = drawerRef.current.offsetHeight;
-      const screenHeight = window.innerHeight;
-      const threshold = screenHeight * 0.5;
-
-      if (currentHeight > threshold) {
-        setIsExpanded(true);
-        drawerRef.current.style.maxHeight = (screenHeight - 100) + 'px';
-      } else {
-        setIsExpanded(false);
-        drawerRef.current.style.maxHeight = '288px';
-      }
-    }
-  };
-
-  const handleScroll = (e) => {
-    if (!isExpanded) return;
-  };
-
-  const handleWheel = (e) => {
-    if (!isExpanded || isDraggingRef.current) return;
-
-    const scrollContainer = scrollContainerRef.current;
-    if (scrollContainer.scrollTop <= 5 && e.deltaY > 0) {
-      e.preventDefault();
-      setIsExpanded(false);
-      drawerRef.current.style.maxHeight = '288px';
     }
   };
 
@@ -437,9 +267,9 @@ function RideDrawer() {
 
   const getDemandBadge = () => {
     const badges = {
-      normal: { label: 'Normal', color: 'bg-green-100 text-green-700', icon: '✅' },
-      medium: { label: 'Medium Demand', color: 'bg-yellow-100 text-yellow-700', icon: '⚠️' },
-      high: { label: 'High Demand', color: 'bg-red-100 text-red-700', icon: '🔴' },
+      normal: { label: 'Normal', color: 'bg-green-50 text-green-700 border border-green-200' },
+      medium: { label: 'Medium Demand', color: 'bg-yellow-50 text-yellow-700 border border-yellow-200' },
+      high: { label: 'High Demand', color: 'bg-red-50 text-red-700 border border-red-200' },
     };
     return badges[demandLevel];
   };
@@ -451,223 +281,208 @@ function RideDrawer() {
         <PriceBreakdown ride={selectedRide} onClose={() => setShowBreakdown(false)} />
       )}
 
-      {/* Main Drawer */}
-      <div
-        ref={drawerRef}
-        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-20 transition-all duration-300 overflow-hidden flex flex-col"
-        style={{
-          maxHeight: isExpanded ? 'calc(100vh - 100px)' : '288px',
-          transitionProperty: isDraggingRef.current ? 'none' : 'max-height',
-        }}
-      >
-        {/* Drag Handle & Header */}
-        <div
-          className="bg-gradient-to-r from-white to-gray-50 rounded-t-3xl pt-3 pb-4 px-4 border-b border-gray-200 sticky top-0 z-10 select-none"
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-          style={{
-            cursor: isDraggingRef.current ? 'grabbing' : 'ns-resize',
-          }}
-        >
-          {/* Bidirectional Arrow Indicator */}
-          <div className="flex flex-col items-center gap-2 mb-3">
-            <svg 
-              width="20" 
-              height="24" 
-              viewBox="0 0 20 24" 
-              className="text-gray-400"
-              style={{
-                animation: 'bounce 2s infinite',
-              }}
-            >
-              <style>{`
-                @keyframes bounce {
-                  0%, 100% { transform: translateY(0); }
-                  50% { transform: translateY(4px); }
-                }
-              `}</style>
-              <path 
-                d="M10 2 L15 8 L13 8 L13 10 L7 10 L7 8 L5 8 Z" 
-                fill="currentColor"
-              />
-              <path 
-                d="M10 22 L5 16 L7 16 L7 14 L13 14 L13 16 L15 16 Z" 
-                fill="currentColor"
-              />
-            </svg>
-            <div className="w-12 h-1 bg-gradient-to-r from-gray-300 to-gray-400 rounded-full"></div>
+      {/* Toggle Button (when sidebar is closed) */}
+      {!sidebarOpen && (
+        <div className="fixed right-4 bottom-20 z-30 flex flex-col items-end gap-2">
+          <div className="bg-gray-900 text-white text-xs font-medium px-3 py-1.5 rounded-lg whitespace-nowrap">
+            View Rides
           </div>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="bg-gray-900 text-white p-3 rounded-lg shadow-lg hover:bg-black transition active:scale-95"
+            title="View Available Rides"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
+        </div>
+      )}
 
-          {/* Source & Destination Panel */}
-          <div className="bg-white border border-gray-300 rounded-xl p-3 mb-3">
+      {/* Right Sidebar */}
+      <div
+        className={`fixed right-0 top-0 h-screen bg-white border-l border-gray-200 z-20 transition-transform duration-300 flex flex-col ${
+          sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+        style={{ width: '380px', maxWidth: '90vw' }}
+      >
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 p-4 flex items-center justify-between flex-shrink-0">
+          <h2 className="font-semibold text-lg text-gray-900">Available Rides</h2>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="text-gray-400 hover:text-gray-600 p-2 rounded transition"
+            title="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Source & Destination Panel */}
+        <div className="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+          <div className="space-y-3">
             {/* Source Field */}
-            <div className="flex items-center gap-3 pb-3 border-b border-gray-200">
-              <div className="flex flex-col items-center gap-1">
-                <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                <div className="w-0.5 h-6 bg-gray-300"></div>
+            <div className="flex items-start gap-3">
+              <div className="flex flex-col items-center gap-1.5 pt-1">
+                <div className="w-2.5 h-2.5 bg-blue-600 rounded-full"></div>
+                <div className="w-0.5 h-5 bg-gray-300"></div>
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 font-semibold">From</p>
-                <p className="text-sm font-bold text-gray-900 truncate">{sourceName}</p>
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 font-medium">From</p>
+                <p className="text-sm font-semibold text-gray-900 truncate">{sourceName}</p>
               </div>
-              <button className="text-gray-400 hover:text-gray-600 text-lg">
-                📍
-              </button>
             </div>
 
             {/* Destination Field - EDITABLE */}
-            <div className="pt-3">
-              {editingDestination ? (
-                <div className="flex items-center gap-2">
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                  </div>
-                  <input
-                    type="text"
-                    value={destinationInput}
-                    onChange={(e) => setDestinationInput(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        searchLocation(destinationInput);
-                      }
-                    }}
-                    placeholder="Search destination..."
-                    className="flex-1 px-2 py-1 border border-blue-400 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    autoFocus
-                  />
-                  <button
-                    onClick={() => {
-                      setEditingDestination(false);
-                      setDestinationInput('');
-                    }}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
+            {editingDestination ? (
+              <div className="flex items-start gap-3">
+                <div className="pt-1">
+                  <div className="w-2.5 h-2.5 bg-red-600 rounded-full"></div>
                 </div>
-              ) : (
-                <div 
-                  onClick={handleDestinationClick}
-                  className="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-2 rounded-lg transition"
+                <input
+                  type="text"
+                  value={destinationInput}
+                  onChange={(e) => setDestinationInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      searchLocation(destinationInput);
+                    }
+                  }}
+                  placeholder="Search location..."
+                  className="flex-1 px-2 py-1.5 border border-blue-400 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    setEditingDestination(false);
+                    setDestinationInput('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 px-2"
                 >
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="w-3 h-3 bg-red-600 rounded-full"></div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-gray-500 font-semibold">To</p>
-                    <p className="text-sm font-bold text-gray-900 truncate">
-                      {destination ? destinationName : 'Set destination'}
-                    </p>
-                  </div>
+                  ✕
+                </button>
+              </div>
+            ) : (
+              <div 
+                onClick={handleDestinationClick}
+                className="flex items-start gap-3 cursor-pointer hover:bg-gray-50 p-2 -mx-2 rounded-lg transition"
+              >
+                <div className="pt-1">
+                  <div className="w-2.5 h-2.5 bg-red-600 rounded-full"></div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs text-gray-500 font-medium">To</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate">
+                    {destination ? destinationName : 'Select destination'}
+                  </p>
+                </div>
+                {destination && (
                   <button 
                     onClick={(e) => {
                       e.stopPropagation();
                       handleClearDestination();
                     }}
-                    className="text-gray-400 hover:text-red-600 transition"
+                    className="text-gray-400 hover:text-red-600 transition px-2"
                   >
-                    {destination ? '✕' : '📍'}
+                    ✕
                   </button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Distance & Demand Info / City Check */}
-          {destination && !sameCity ? (
-            <div className="text-xs font-semibold flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg p-2">
-              <span className="text-red-600">❌</span>
-              <span className="text-red-700">
-                Different cities - Only available within same city
-              </span>
+          {/* Distance & Demand Info */}
+          {destination && !isWithinRange ? (
+            <div className="mt-3 text-xs font-medium text-red-700 bg-red-50 border border-red-200 rounded-lg p-2">
+              Distance exceeds 10 km limit
             </div>
           ) : destination && distanceInfo ? (
-            <div className="flex items-center justify-between gap-2 mb-2">
-              <div className="text-xs font-semibold flex items-center gap-2">
-                <span className="text-green-600">✅</span>
-                <span className="text-gray-700">{distanceInfo.distance.toFixed(1)}km</span>
+            <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="text-xs font-medium text-gray-700">
+                {distanceInfo.distance.toFixed(1)} km
               </div>
-              <div className={`text-xs font-semibold px-2 py-1 rounded ${getDemandBadge().color}`}>
-                {getDemandBadge().icon} {getDemandBadge().label}
+              <div className={`text-xs font-medium px-2.5 py-1 rounded-lg ${getDemandBadge().color}`}>
+                {getDemandBadge().label}
               </div>
             </div>
           ) : destination ? (
-            <div className="text-xs text-blue-600 font-semibold flex items-center gap-1 animate-pulse">
-              <span>⏳</span> Checking city...
+            <div className="mt-3 text-xs text-gray-500 font-medium">
+              Calculating distance...
             </div>
           ) : (
-            <div className="text-xs text-gray-500 flex items-center gap-1">
-              <span>👆</span> Click "To" field or map to set destination
+            <div className="mt-3 text-xs text-gray-500 font-medium">
+              Set destination on map
             </div>
           )}
         </div>
 
-        {/* Scrollable Content */}
+        {/* Ride Type Tabs */}
+        <div className="bg-white border-b border-gray-200 px-4 py-3 flex gap-2 overflow-x-auto flex-shrink-0">
+          {['All', 'Bike', 'Auto', 'Cab'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setActiveTab(type.toLowerCase())}
+              className={`px-3 py-1.5 rounded-lg font-medium text-xs whitespace-nowrap transition ${
+                activeTab === type.toLowerCase()
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {type}
+            </button>
+          ))}
+        </div>
+
+        {/* Scrollable Rides List */}
         <div 
           ref={scrollContainerRef}
-          className="flex-1 overflow-y-auto overscroll-contain"
+          className="flex-1 overflow-y-auto"
           style={{
             WebkitOverflowScrolling: 'touch',
           }}
-          onScroll={handleScroll}
-          onWheel={handleWheel}
         >
-          {/* Ride Type Tabs */}
-          <div className="bg-white border-b flex gap-2 px-4 py-3 overflow-x-auto sticky top-0 z-10">
-            {['All', 'Bike', 'Auto', 'Cab'].map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveTab(type.toLowerCase())}
-                className={`px-4 py-2 rounded-full font-semibold text-sm whitespace-nowrap transition ${
-                  activeTab === type.toLowerCase()
-                    ? 'bg-black text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
-              >
-                {type}
-              </button>
-            ))}
-          </div>
-
-          {/* Rides List */}
           {loading ? (
-            <div className="p-6 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 font-semibold">Fetching real-time rides...</p>
+            <div className="p-8 text-center">
+              <div className="inline-block">
+                <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-blue-600"></div>
+              </div>
+              <p className="text-gray-500 font-medium text-sm mt-3">Fetching rides...</p>
             </div>
           ) : !destination ? (
             <div className="p-6 text-center">
-              <p className="text-gray-600 font-bold text-lg mb-2">📍 Select a Destination</p>
-              <p className="text-gray-500 text-sm">
-                Click the "To" field above or click on the map to set your destination in {sourceCity}.
+              <p className="text-gray-600 font-semibold text-sm mb-1">Select Destination</p>
+              <p className="text-gray-500 text-xs">
+                Choose a location on the map to view available rides
               </p>
             </div>
-          ) : !sameCity ? (
+          ) : !isWithinRange ? (
             <div className="p-6 text-center">
-              <p className="text-gray-600 font-bold text-lg mb-2">🚫 Different City</p>
-              <p className="text-gray-500 text-sm mb-2">
-                Rides are only available within <span className="font-semibold">{sourceCity}</span>
+              <p className="text-gray-600 font-semibold text-sm mb-1">Out of Service Area</p>
+              <p className="text-gray-500 text-xs mb-0.5">
+                {distanceInfo?.distance.toFixed(1)} km away
               </p>
-              <p className="text-xs text-gray-400">
-                You selected destination in <span className="font-semibold">{destCity}</span>
+              <p className="text-gray-400 text-xs">
+                Service available within 10 km
               </p>
             </div>
-          ) : faresLoading || predictedRides.length === 0 && destination ? (
-            <div className="p-6 text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-500 font-semibold">🤖 ML calculating price ranges for {distanceInfo?.distance.toFixed(1)}km...</p>
+          ) : faresLoading ? (
+            <div className="p-8 text-center">
+              <div className="inline-block">
+                <div className="animate-spin rounded-full h-10 w-10 border-2 border-gray-300 border-t-blue-600"></div>
+              </div>
+              <p className="text-gray-500 font-medium text-sm mt-3">Calculating prices...</p>
             </div>
           ) : filteredRides.length > 0 ? (
             <div className="divide-y">
               {filteredRides.map((ride, index) => (
                 <div
                   key={`${ride.app}-${ride.id}-${index}`}
-                  className="p-4 hover:bg-blue-50 transition"
+                  className="p-4 hover:bg-gray-50 transition border-b"
                 >
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <div
-                        className="w-12 h-12 rounded-lg flex items-center justify-center text-white text-sm font-bold text-center flex-shrink-0"
+                        className="w-10 h-10 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
                         style={{
                           backgroundColor:
                             ride.app === 'uber'
@@ -677,89 +492,66 @@ function RideDrawer() {
                               : '#d97706',
                         }}
                       >
-                        {ride.app === 'uber' ? 'Ⓤ' : ride.app === 'ola' ? 'Ⓞ' : 'Ⓡ'}
+                        {ride.app === 'uber' ? 'U' : ride.app === 'ola' ? 'O' : 'R'}
                       </div>
 
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-gray-900 truncate">{ride.name}</p>
+                        <p className="font-semibold text-gray-900 text-sm truncate">{ride.name}</p>
                         <p className="text-xs text-gray-500 capitalize">{ride.app}</p>
                       </div>
                     </div>
 
-                    {/* Price Range Display */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <div className="text-right">
-                        {ride.priceRange ? (
-                          <>
-                            <p className="font-bold text-blue-600 text-sm">
-                              ₹{ride.priceRange.min}-{ride.priceRange.max}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              now: ₹{ride.priceRange.current}
-                            </p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="font-bold text-blue-600 text-lg">₹{ride.price}</p>
-                            <p className="text-xs text-gray-500">Estimated</p>
-                          </>
-                        )}
-                      </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowBreakdown(true);
-                          setSelectedRide(ride);
-                        }}
-                        className="text-blue-600 hover:text-blue-700 font-bold text-sm whitespace-nowrap flex-shrink-0"
-                      >
-                        💡
-                      </button>
+                    {/* Price Display */}
+                    <div className="text-right flex-shrink-0 ml-3">
+                      {ride.priceRange ? (
+                        <>
+                          <p className="font-bold text-blue-600 text-sm">
+                            ₹{ride.priceRange.min}-{ride.priceRange.max}
+                          </p>
+                          <p className="text-xs text-gray-500">now ₹{ride.priceRange.current}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="font-bold text-blue-600 text-sm">₹{ride.price}</p>
+                          <p className="text-xs text-gray-500">Estimated</p>
+                        </>
+                      )}
                     </div>
                   </div>
 
                   <div className="flex gap-4 text-xs text-gray-600 mb-3">
-                    <span>⭐ {ride.rating}</span>
-                    <span>📍 {ride.distance?.toFixed(1) || ride.dist}km</span>
-                    <span>⏱️ ~{ride.eta} min</span>
+                    <span className="font-medium">{ride.rating} Rating</span>
+                    <span className="font-medium">{ride.distance?.toFixed(1) || ride.dist} km</span>
+                    <span className="font-medium">{ride.eta} min</span>
                   </div>
-
-                  {/* Price Info */}
-                  {ride.priceRange && (
-                    <div className="bg-blue-50 px-2 py-1 rounded text-xs text-blue-700 mb-2 font-semibold">
-                      💰 Price varies: ₹{ride.priceRange.min} (off-peak) to ₹{ride.priceRange.max} (peak hours)
-                    </div>
-                  )}
 
                   <button
                     onClick={() => handleBookRide(ride)}
                     disabled={bookingInProgress}
-                    className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 active:scale-95"
+                    className="w-full bg-blue-600 text-white font-semibold py-2.5 px-3 rounded-lg hover:bg-blue-700 transition disabled:bg-gray-400 active:scale-95 text-sm"
                   >
-                    {bookingInProgress ? '⏳ Opening app...' : `✓ Book ${ride.app.toUpperCase()}`}
+                    {bookingInProgress ? 'Booking...' : 'Book Now'}
                   </button>
                 </div>
               ))}
             </div>
           ) : (
             <div className="p-6 text-center">
-              <p className="text-gray-500 font-semibold">No rides available</p>
-              <p className="text-xs text-gray-400 mt-1">
-                Try a different location or ride type
-              </p>
+              <p className="text-gray-500 font-medium text-sm">No Rides Available</p>
+              <p className="text-gray-400 text-xs mt-1">Try another location</p>
             </div>
           )}
 
-          <div className="h-8" />
+          <div className="h-6" />
         </div>
       </div>
 
-      {!isExpanded && rides.length > 0 && (
-        <div className="fixed bottom-80 left-1/2 transform -translate-x-1/2 z-10 text-center pointer-events-none">
-          <p className="text-blue-600 text-sm font-semibold bg-white px-4 py-2 rounded-full shadow-lg">
-            ✅ {rides.length} rides available • 👆 Drag up to book
-          </p>
-        </div>
+      {/* Overlay when sidebar is open */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 z-10 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
     </>
   );
